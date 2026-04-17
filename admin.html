@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MB Enterprises | Admin Control Panel</title>
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="admin.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+
+    <!-- Auth Screen -->
+    <div id="auth-screen">
+        <div class="auth-box">
+            <i class='bx bx-shield-quarter' style="font-size: 3rem; color: var(--primary); margin-bottom: 1rem;"></i>
+            <h2>Admin Login</h2>
+            <form id="login-form">
+                <div class="form-group">
+                    <label>Master PIN</label>
+                    <input type="password" id="admin-pin" class="form-control" required placeholder="Enter PIN">
+                    <small style="color:var(--text-muted);">Default PIN is 1234</small>
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%;">Unlock Dashboard</button>
+                <p id="login-error" style="color: #dc3545; margin-top: 15px; display: none;">Incorrect PIN</p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="brand">
+            <i class='bx bx-cog'></i> Admin Panel
+        </div>
+        <div class="nav-item active" data-target="dashboard">
+            <i class='bx bx-grid-alt'></i> Dashboard
+        </div>
+        <div class="nav-item" data-target="products">
+            <i class='bx bx-package'></i> Product List
+        </div>
+        <div class="nav-item" data-target="categories">
+            <i class='bx bx-category'></i> Categories
+        </div>
+        <div class="nav-item" data-target="quotations">
+            <i class='bx bx-file'></i> Quotations (Enquiries)
+        </div>
+        <div class="nav-item" data-target="settings">
+            <i class='bx bx-brush'></i> PDF Branding
+        </div>
+        
+        <div class="sidebar-footer">
+            <div class="nav-item" id="logout-btn" style="color: #ffcccc;">
+                <i class='bx bx-log-out'></i> Log Out
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="header">
+            <h2 id="page-title">Dashboard</h2>
+            <div>
+                <a href="index.html" class="btn-secondary" target="_blank" style="text-decoration: none;"><i class='bx bx-link-external'></i> View Live Website</a>
+            </div>
+        </div>
+
+        <div class="sections-container">
+            
+            <!-- Dashboard Section -->
+            <div id="section-dashboard" class="section active">
+                <div id="firebase-warning" style="display:none; background: rgba(245,158,11,0.1); color: #f59e0b; padding: 15px; margin-bottom: 20px; border-radius: var(--radius-md); border: 1px solid rgba(245,158,11,0.2);">
+                    <strong>Notice:</strong> Could not connect to Firebase database. Please check your Firebase Rules or Internet Connection.
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class='bx bx-package'></i></div>
+                        <div class="stat-info">
+                            <h3 id="stat-products">0</h3>
+                            <p>Total Products</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class='bx bx-envelope'></i></div>
+                        <div class="stat-info">
+                            <h3 id="stat-requests">0</h3>
+                            <p>Pending Enquiries</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products Section -->
+            <div id="section-products" class="section">
+                <div class="data-table-container">
+                    <div class="data-table-header" style="flex-direction: column; align-items: stretch; gap: 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <h3>Manage Products</h3>
+                            <button class="btn-primary" id="btn-add-product"><i class='bx bx-plus'></i> Add Product</button>
+                        </div>
+                        <div class="search-bar" style="position: relative; width: 100%;">
+                            <i class='bx bx-search' style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+                            <input type="text" id="admin-product-search" placeholder="Search by product name, category..." class="form-control" style="padding-left: 38px;">
+                        </div>
+                    </div>
+                    <div style="overflow-x: auto; padding: 1rem;">
+                        <table id="products-table">
+                            <thead>
+                                <tr>
+                                    <th>Image</th>
+                                    <th>Product Name</th>
+                                    <th>Category</th>
+                                    <th>MRP (Selling)</th>
+                                    <th>Cost (Internal)</th>
+                                    <th style="width: 100px;">Stock</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-products-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Categories Section -->
+            <div id="section-categories" class="section">
+                <div class="data-table-container">
+                    <div class="data-table-header">
+                        <h3>Manage Categories</h3>
+                    </div>
+                    <div style="padding: 2rem;">
+                        <p style="margin-bottom: 15px; color: var(--text-muted);">These categories will appear in your live website.</p>
+                        
+                        <div id="admin-categories-container" style="margin-bottom: 25px;">
+                            <!-- Cats inject -->
+                        </div>
+
+                        <form id="add-category-form" style="display: flex; gap: 10px; max-width: 400px;">
+                            <input type="text" id="new-category-input" class="form-control" placeholder="New Category Name" required>
+                            <button type="submit" class="btn-primary">Add</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quotations Section -->
+            <div id="section-quotations" class="section">
+                <!-- Revenue Dashboard -->
+                <div class="stats-grid" id="admin-stats-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 25px;">
+                    <div class="stat-card" style="background: var(--surface-color); padding: 25px; border-radius: var(--radius-md); border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 5px;">
+                        <div style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Revenue Generated</div>
+                        <div id="stat-revenue" style="font-size: 2rem; font-weight: bold; color: #10b981;">₹0</div>
+                    </div>
+                    <div class="stat-card" style="background: var(--surface-color); padding: 25px; border-radius: var(--radius-md); border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 5px;">
+                        <div style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Open Quotations</div>
+                        <div id="stat-pending" style="font-size: 2rem; font-weight: bold; color: #f59e0b;">0</div>
+                    </div>
+                    <div class="stat-card" style="background: var(--surface-color); padding: 25px; border-radius: var(--radius-md); border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 5px;">
+                        <div style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Deals Closed</div>
+                        <div id="stat-closed" style="font-size: 2rem; font-weight: bold; color: var(--primary);">0</div>
+                    </div>
+                </div>
+
+                <div class="data-table-container">
+                    <div class="data-table-header" style="flex-direction: column; align-items: flex-start; gap: 15px;">
+                        <h3>Enquiries / Quotation Requests</h3>
+                        
+                        <div class="tab-group" style="display: flex; gap: 5px; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 8px;">
+                            <button class="tab-btn active" data-tab="all">All</button>
+                            <button class="tab-btn" data-tab="New">New / To Review</button>
+                            <button class="tab-btn" data-tab="Quote Sent">Sent (Waiting)</button>
+                            <button class="tab-btn" data-tab="Partial">Pending Balance</button>
+                            <button class="tab-btn" data-tab="Paid">Fully Paid</button>
+                            <button class="tab-btn" data-tab="Hold">On Hold</button>
+                        </div>
+                    </div>
+                    <div style="overflow-x: auto; padding: 1rem;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Customer & Contact</th>
+                                    <th style="width: 120px;">Net Total</th>
+                                    <th style="width: 120px;">Amount Paid</th>
+                                    <th style="width: 120px;">Balance</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-quotes-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Section -->
+            <div id="section-settings" class="section">
+                <div style="max-width: 600px; background: var(--surface-color); padding: 30px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                    <h3 style="margin-bottom: 20px; color: var(--primary);">Business & PDF Settings</h3>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 25px;">Configure your company info that appears on the generated PDF Quotations.</p>
+                    
+                    <form id="settings-form">
+                        <div class="form-group">
+                            <label>Company Logo URL</label>
+                            <input type="text" id="s-logo" class="form-control" placeholder="https://yourlink.com/logo.png">
+                            <small style="color: var(--text-muted);">Use a transparent PNG if possible.</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Display Currency</label>
+                            <input type="text" id="s-currency" class="form-control" value="₹">
+                        </div>
+                        <div class="form-group">
+                            <label>Company Address (For PDF Footer)</label>
+                            <textarea id="s-address" class="form-control" rows="2"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Company Contact Info</label>
+                            <input type="text" id="s-contact" class="form-control" placeholder="Email: abc@test.com | Phone: 99xxxx">
+                        </div>
+                        <div class="form-group">
+                            <label>Global Tax Rate (%)</label>
+                            <input type="number" id="s-tax" class="form-control" value="18">
+                        </div>
+                        <button type="submit" class="btn-primary" style="width: 100%; margin-top: 20px;">Save All Settings</button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Product Modal -->
+    <div class="modal" id="product-modal">
+        <div class="modal-content">
+            <button class="close-modal" id="close-product-modal"><i class='bx bx-x'></i></button>
+            <h2 id="product-modal-title" style="margin-bottom: 20px;">Add Product</h2>
+            <form id="product-form">
+                <input type="hidden" id="p-id">
+                <div class="form-group">
+                    <label>Product Name</label>
+                    <input type="text" id="p-name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="p-category" class="form-control" required>
+                        <!-- Dynamic Cats -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Detailed Description</label>
+                    <textarea id="p-desc" class="form-control" rows="4" required></textarea>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Selling Price (MRP)</label>
+                        <input type="number" id="p-price" class="form-control" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Internal Cost Price (₹)</label>
+                        <input type="number" id="p-cost" class="form-control" placeholder="0" style="background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.2);">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Image URL</label>
+                    <input type="text" id="p-img" class="form-control" placeholder="https://...">
+                </div>
+                <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+                    <input type="checkbox" id="p-stock" checked style="width: 20px; height: 20px; cursor: pointer;">
+                    <label for="p-stock" style="margin-bottom: 0; cursor: pointer;">Product is In Stock</label>
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%; margin-top: 15px;">Save Product</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Quote Process Modal -->
+    <div class="modal" id="quote-modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <button class="close-modal" id="close-quote-modal"><i class='bx bx-x'></i></button>
+            <h2 style="margin-bottom: 20px;">Quotation Manager & CRM</h2>
+            
+            <div id="customer-insights" style="background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2); color: #3b82f6; padding: 12px 16px; border-radius: var(--radius-md); margin-bottom: 20px; font-weight: 500; display: none;">
+                <!-- Repeat Customer Logic injected here -->
+            </div>
+
+            <form id="generate-pdf-form">
+                <div style="background:var(--surface-color); padding:20px; border:1px solid var(--border-color); border-radius:var(--radius-md); margin-bottom: 20px;">
+                    <h3 style="margin-bottom: 15px; font-size: 1.1rem; color: var(--primary); font-family: var(--font-heading);">Customer Details (Editable)</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">You can fix any typos in the customer's details here before generating the PDF.</p>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Full Name</label>
+                            <input type="text" id="c-edit-name" class="form-control" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Company Name</label>
+                            <input type="text" id="c-edit-company" class="form-control">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Email Address</label>
+                            <input type="email" id="c-edit-email" class="form-control" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Phone Number</label>
+                            <input type="text" id="c-edit-phone" class="form-control" required>
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1; margin-bottom:0;">
+                            <label>Delivery Address</label>
+                            <textarea id="c-edit-address" class="form-control" rows="2"></textarea>
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1; margin-bottom:0;">
+                            <label>Customer Request Notes</label>
+                            <textarea id="c-edit-notes" class="form-control" rows="2" style="background:rgba(245,158,11,0.05); border-color: rgba(245,158,11,0.2);"></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3 style="margin-bottom: 15px; font-size: 1.1rem; color: var(--primary);">Product Pricing</h3>
+                <div id="quote-items-container"></div>
+                
+                <h3 style="margin-top: 25px; margin-bottom: 15px; font-size: 1.1rem; color: var(--primary); font-family: var(--font-heading);">Payment Tracking</h3>
+                <div style="background:var(--surface-color); padding:20px; border:1px solid var(--border-color); border-radius:var(--radius-md); margin-bottom: 20px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Pipeline Stage</label>
+                            <select id="q-payment-status" class="form-control">
+                                <option value="New">New Request</option>
+                                <option value="Draft">Draft (Internal)</option>
+                                <option value="Quote Sent">Quote Sent</option>
+                                <option value="On Hold">On Hold / Waiting</option>
+                                <option value="Paid">Deal Closed (Paid)</option>
+                                <option value="Partial">Partially Paid</option>
+                                <option value="Cancelled">Cancelled/Lost</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Amount Received (₹)</label>
+                            <input type="number" id="q-amount-paid" class="form-control" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end; align-items:center; margin-top:20px; padding-top:20px; border-top:1px solid var(--border-color); gap: 15px;">
+                    <button type="button" id="update-quote-db-btn" class="btn-secondary" style="padding: 12px 24px; font-size: 13px;"><i class='bx bx-save'></i> Save Updates</button>
+                    <button type="button" id="download-quote-pdf-btn" class="btn-primary" style="padding: 12px 24px; font-size: 13px;"><i class='bx bxs-file-pdf'></i> Download PDF</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+    <script type="module" src="admin.js"></script>
+</body>
+</html>

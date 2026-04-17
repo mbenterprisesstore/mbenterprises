@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MB Enterprises | Electronics & Hardware</title>
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <!-- Cinematic Background Glows -->
+    <div class="bg-glow bg-glow-purple"></div>
+    <div class="bg-glow bg-glow-blue"></div>
+
+    <!-- Standard Header -->
+    <nav class="navbar">
+        <a href="#" class="brand">
+            <i class='bx bxs-component'></i>
+            <span>MB Enterprises</span>
+        </a>
+
+        <div class="search-bar">
+            <i class='bx bx-search'></i>
+            <input type="text" id="search-input" placeholder="Search for products, categories...">
+        </div>
+
+        <div class="nav-actions">
+            <!-- <a href="admin.html" style="font-size: 0.9rem; color: var(--text-muted);">Admin Login</a> -->
+            <div class="cart-icon-container" id="cart-btn">
+                <i class='bx bx-cart'></i>
+                <span>Cart</span>
+                <span class="cart-badge" id="cart-count">0</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1>All required Material <br> Supplier For Your Business</h1>
+            <p>Your trusted B2B partner for high-quality electronics, components, and industrial tools. Request a custom
+                quotation for bulk orders and get the best industry rates.</p>
+            <div class="hero-features">
+                <div class="hero-feature"><i class='bx bxs-truck'></i> Fast Nationwide Delivery</div>
+                <div class="hero-feature"><i class='bx bxs-badge-check'></i> 100% Genuine Products</div>
+                <div class="hero-feature"><i class='bx bxs-offer'></i> Custom B2B Pricing</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categories Nav -->
+    <div class="category-menu" id="category-filters">
+        <button class="active" data-category="all">All Products</button>
+        <!-- Categories will be injected here from Firebase -->
+        <span style="color:var(--text-muted); padding: 8px; font-size: 0.85rem;" id="loading-cats">Loading
+            categories...</span>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="store-header"
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div>
+                <h2 id="current-category-title" style="margin-bottom: 5px; font-size: 1.8rem;">All Products</h2>
+                <p style="color: var(--text-muted); font-size: 0.95rem;">Showing results from our catalog.</p>
+            </div>
+        </div>
+
+        <!-- Product Grid -->
+        <div class="products-grid" id="products-container"
+            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem;">
+            <div
+                style="width: 100%; text-align: center; color: var(--text-muted); grid-column: 1 / -1; padding: 50px 0;">
+                <div class="loader" style="display: block;"></div>
+                <p style="margin-top:20px;">Loading catalog...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-grid">
+            <div class="footer-col">
+                <h3>MB Enterprises</h3>
+                <p>Your reliable B2B supplier for premium electronics, tools, and industrial hardware.</p>
+                <p><i class='bx bx-envelope'></i> vv414352@gmail.com</p>
+                <p><i class='bx bxs-phone'></i> +91 96864 96501</p>
+            </div>
+            <div class="footer-col">
+                <h3>Quick Links</h3>
+                <a href="#">Home</a>
+                <a href="#">All Products</a>
+                <a href="#">About Us</a>
+                <a href="#">Contact Support</a>
+            </div>
+            <div class="footer-col">
+                <h3>Customer Service</h3>
+                <a href="#">Shipping Policies</a>
+                <a href="#">Returns & Refunds</a>
+                <a href="#">Terms and Conditions</a>
+                <a href="#">Privacy Policy</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            &copy; <span id="current-year"></span> MB Enterprises. All rights reserved. | <a href="admin.html"
+                style="color:var(--text-muted);">Admin Portal</a>
+        </div>
+    </footer>
+
+    <!-- Cart Sidebar & Overlay -->
+    <div class="cart-overlay" id="cart-overlay"></div>
+    <div class="cart-sidebar" id="cart-sidebar">
+        <div class="cart-header">
+            <h2>Your Enquiry Cart</h2>
+            <button class="close-modal" id="close-cart-btn" style="position:static;"><i class='bx bx-x'></i></button>
+        </div>
+
+        <div class="cart-items" id="cart-items-container">
+            <!-- Items injected via JS -->
+            <div style="text-align: center; color: var(--text-muted); margin-top: 50px;" id="empty-cart-msg">
+                <i class='bx bx-cart' style="font-size: 3rem; margin-bottom: 15px;"></i>
+                <p>Your cart is empty.</p>
+            </div>
+        </div>
+
+        <div class="cart-footer">
+            <div
+                style="display:flex; justify-content:space-between; font-weight:bold; font-size:1.1rem; margin-bottom:15px;">
+                <span>Total Items:</span>
+                <span id="cart-total-items">0</span>
+            </div>
+            <button class="btn-primary btn-enquiry" id="request-quote-btn">Proceed to Request Quote</button>
+        </div>
+    </div>
+
+    <!-- Product Details Modal -->
+    <div class="modal" id="product-modal">
+        <div class="modal-content">
+            <button class="close-modal" id="close-product-modal"><i class='bx bx-x'></i></button>
+            <div class="product-details-container">
+                <div class="product-details-img">
+                    <img id="pd-img" src="" alt="Product">
+                </div>
+                <div class="product-details-info">
+                    <div class="product-category" id="pd-category" style="margin-bottom: 5px;"></div>
+                    <h2 id="pd-name"></h2>
+                    <div class="product-brand" id="pd-brand">MB Quality Assured</div>
+                    <div class="product-price-large"><span id="pd-price"></span></div>
+
+                    <p class="product-description-full" id="pd-desc"></p>
+
+                    <div class="qty-selector">
+                        <label>Quantity:</label>
+                        <div class="qty-input-group">
+                            <button id="pd-qty-dec">-</button>
+                            <input type="number" id="pd-qty-input" value="1" min="1">
+                            <button id="pd-qty-inc">+</button>
+                        </div>
+                    </div>
+
+                    <button class="btn-primary" id="pd-add-btn" style="width: 100%; padding: 15px; font-size: 1.1rem;">
+                        <i class='bx bx-cart-add'></i> Add to Cart
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enquiry Form Modal -->
+    <div class="modal" id="enquiry-modal">
+        <div class="modal-content form-modal">
+            <button class="close-modal" id="close-enquiry-modal"><i class='bx bx-x'></i></button>
+            <h2 style="margin-bottom: 5px;">Request Quotation</h2>
+            <p style="color:var(--text-muted); margin-bottom: 20px; font-size:0.9rem;">Fill in your details. Our sales
+                team will email you the official quotation shortly.</p>
+
+            <form id="enquiry-form">
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" id="c-name" class="form-control" required placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                    <label>Company Name</label>
+                    <input type="text" id="c-company" class="form-control" placeholder="Acme Corp (Optional)">
+                </div>
+                <div class="form-group">
+                    <label>Email Address *</label>
+                    <input type="email" id="c-email" class="form-control" required placeholder="john@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Phone Number *</label>
+                    <input type="tel" id="c-phone" class="form-control" required placeholder="+91 9876543210">
+                </div>
+                <div class="form-group">
+                    <label>Delivery Address / City</label>
+                    <textarea id="c-address" class="form-control" placeholder="123 Street, City" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Requirement Notes</label>
+                    <textarea id="c-notes" class="form-control" placeholder="Any specific variations or queries..."
+                        rows="2"></textarea>
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%; margin-top: 10px;"
+                    id="submit-enquiry-btn">
+                    <span id="submit-text">Submit Enquiry</span>
+                    <div class="loader" id="submit-loader" style="width: 15px; height: 15px; border-width: 2px;"></div>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <script>document.getElementById('current-year').textContent = new Date().getFullYear();</script>
+    <script type="module" src="app.js"></script>
+</body>
+
+</html>
