@@ -104,3 +104,19 @@ th { background: rgba(0,0,0,0.2); color: var(--text-muted); font-weight: 600; te
     color: #fff;
     box-shadow: 0 4px 12px rgba(124,58,237,0.3);
 }
+
+/* Stock Sub-tabs */
+.stock-tab-btn {
+    background: none;
+    color: var(--text-muted);
+    transition: var(--transition);
+}
+.stock-tab-btn.active {
+    background: var(--primary) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 15px rgba(124,58,237,0.3);
+}
+.stock-tab-btn:hover:not(.active) {
+    background: rgba(255,255,255,0.05);
+    color: var(--text-main);
+}

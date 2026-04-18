@@ -6,6 +6,7 @@ let products = [];
 let categories = ['Electronics', 'Hardware', 'Tools', 'Accessories']; // Fallback
 let cart = JSON.parse(localStorage.getItem('mb_cart') || '[]');
 let activeProductToAdded = null;
+let selectedVariant = null;
 
 // DOM Elements
 const productsContainer = document.getElementById('products-container');
@@ -157,6 +158,36 @@ window.openProductModal = (id) => {
     pdDesc.innerText = p.description || "No description provided.";
     pdQtyInput.value = 1;
     
+    // Variant Logic
+    const vCont = document.getElementById('pd-variant-container');
+    const vOptions = document.getElementById('pd-variant-options');
+    const vLabel = document.getElementById('pd-variant-label');
+    
+    selectedVariant = null;
+
+    if (p.variants && p.variants.length > 0) {
+        vCont.style.display = 'block';
+        vLabel.innerText = `${p.variantName || 'Select Option'}:`;
+        vOptions.innerHTML = p.variants.map(v => `<button class="variant-btn" data-value="${v}">${v}</button>`).join('');
+        
+        // Auto select first variant
+        const firstBtn = vOptions.querySelector('.variant-btn');
+        if (firstBtn) {
+            firstBtn.classList.add('active');
+            selectedVariant = p.variants[0];
+        }
+
+        vOptions.querySelectorAll('.variant-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                vOptions.querySelectorAll('.variant-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                selectedVariant = e.target.dataset.value;
+            });
+        });
+    } else {
+        vCont.style.display = 'none';
+    }
+    
     productModal.classList.add('active');
 };
 
@@ -167,8 +198,13 @@ pdAddBtn.addEventListener('click', () => {
     if (!activeProductToAdded) return;
     const qty = parseInt(pdQtyInput.value);
     if(qty < 1) return;
+
+    if (activeProductToAdded.variants && activeProductToAdded.variants.length > 0 && !selectedVariant) {
+        showToast(`Please select a ${activeProductToAdded.variantName || 'variant'}`, 'error');
+        return;
+    }
     
-    addToCart(activeProductToAdded, qty);
+    addToCart(activeProductToAdded, qty, selectedVariant);
     productModal.classList.remove('active');
 });
 
@@ -189,20 +225,21 @@ cartBtn.addEventListener('click', () => {
     });
 });
 
-function addToCart(product, qty) {
-    const existing = cart.find(item => item.id === product.id);
+function addToCart(product, qty, variant = null) {
+    const existing = cart.find(item => item.id === product.id && item.selectedVariant === variant);
     if (existing) {
         existing.qty += qty;
     } else {
-        cart.push({ ...product, qty: qty });
+        cart.push({ ...product, qty: qty, selectedVariant: variant });
     }
     saveCart();
     updateCartUI();
-    showToast(`Added ${qty} x ${product.name} to cart`, 'success');
+    const variantTag = variant ? ` (${variant})` : '';
+    showToast(`Added ${qty} x ${product.name}${variantTag} to cart`, 'success');
 }
 
-function removeFromCart(id) {
-    cart = cart.filter(item => item.id !== id);
+function removeFromCart(id, variant = null) {
+    cart = cart.filter(item => !(item.id === id && item.selectedVariant === variant));
     saveCart();
     updateCartUI();
 }
@@ -230,40 +267,42 @@ function updateCartUI() {
             <div style="display:flex; gap:12px; align-items:center; flex:1;">
                 <img src="${item.imageUrl || 'https://via.placeholder.com/60'}" style="width:50px; height:50px; object-fit:cover; border-radius:8px;">
                 <div style="flex:1;">
-                    <div class="cart-item-title" style="font-size:0.9rem; margin-bottom:4px;">${item.name}</div>
+                    <div class="cart-item-title" style="font-size:0.9rem; margin-bottom:2px;">${item.name}</div>
+                    ${item.selectedVariant ? `<div style="font-size:0.7rem; color:var(--primary); font-weight:600; text-transform:uppercase; margin-bottom:4px;">${item.variantName || 'Variant'}: ${item.selectedVariant}</div>` : ''}
                     <div style="display:flex; align-items:center; gap:10px;">
                         <div class="qty-btn-group" style="display:flex; align-items:center; background:rgba(255,255,255,0.05); border-radius:4px; padding:2px;">
-                            <button class="cart-qty-btn minus" data-id="${item.id}" style="background:none; border:none; color:#fff; padding:2px 8px; cursor:pointer;">-</button>
+                            <button class="cart-qty-btn minus" data-id="${item.id}" data-variant="${item.selectedVariant || ''}" style="background:none; border:none; color:#fff; padding:2px 8px; cursor:pointer;">-</button>
                             <span style="font-size:0.85rem; min-width:20px; text-align:center;">${item.qty}</span>
-                            <button class="cart-qty-btn plus" data-id="${item.id}" style="background:none; border:none; color:#fff; padding:2px 8px; cursor:pointer;">+</button>
+                            <button class="cart-qty-btn plus" data-id="${item.id}" data-variant="${item.selectedVariant || ''}" style="background:none; border:none; color:#fff; padding:2px 8px; cursor:pointer;">+</button>
                         </div>
                         <span style="font-size:0.75rem; color:var(--text-muted);">${item.price > 0 ? '₹' + item.price.toLocaleString() : 'Price on Quote'}</span>
                     </div>
                 </div>
             </div>
-            <button class="remove-btn" data-id="${item.id}" style="background:none; border:none; color:#ff4d4d; cursor:pointer; padding:5px;"><i class='bx bx-trash'></i></button>
+            <button class="remove-btn" data-id="${item.id}" data-variant="${item.selectedVariant || ''}" style="background:none; border:none; color:#ff4d4d; cursor:pointer; padding:5px;"><i class='bx bx-trash'></i></button>
         </div>
     `).join('');
 
     // Attach quantity events
     document.querySelectorAll('.cart-qty-btn.minus').forEach(btn => 
-        btn.addEventListener('click', (e) => changeQty(e.currentTarget.dataset.id, -1))
+        btn.addEventListener('click', (e) => changeQty(e.currentTarget.dataset.id, e.currentTarget.dataset.variant, -1))
     );
     document.querySelectorAll('.cart-qty-btn.plus').forEach(btn => 
-        btn.addEventListener('click', (e) => changeQty(e.currentTarget.dataset.id, 1))
+        btn.addEventListener('click', (e) => changeQty(e.currentTarget.dataset.id, e.currentTarget.dataset.variant, 1))
     );
 
     document.querySelectorAll('.remove-btn').forEach(btn => 
-        btn.addEventListener('click', (e) => removeFromCart(e.currentTarget.dataset.id))
+        btn.addEventListener('click', (e) => removeFromCart(e.currentTarget.dataset.id, e.currentTarget.dataset.variant || null))
     );
 }
 
-function changeQty(id, delta) {
-    const item = cart.find(x => x.id === id);
+function changeQty(id, variant, delta) {
+    const vKey = variant === "" ? null : variant;
+    const item = cart.find(x => x.id === id && x.selectedVariant === vKey);
     if (!item) return;
     item.qty += delta;
     if (item.qty < 1) {
-        removeFromCart(id);
+        removeFromCart(id, vKey);
     } else {
         saveCart();
         updateCartUI();
@@ -298,7 +337,14 @@ enquiryForm.addEventListener('submit', async (e) => {
             address: document.getElementById('c-address').value,
             notes: document.getElementById('c-notes').value,
         },
-        items: cart.map(item => ({ id: item.id, name: item.name, price: item.price, qty: item.qty })),
+        items: cart.map(item => ({ 
+            id: item.id, 
+            name: item.name, 
+            price: item.price, 
+            qty: item.qty,
+            variant: item.selectedVariant,
+            variantName: item.variantName
+        })),
         status: 'pending',
         createdAt: serverTimestamp()
     };

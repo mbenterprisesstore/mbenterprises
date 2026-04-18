@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Quotation | MB Enterprises</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        :root {
+            --primary: #7c3aed;
+            --bg-dark: #0f172a;
+            --surface: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: rgba(255,255,255,0.1);
+            --radius: 12px;
+        }
+
+        * { margin:0; padding:0; box-sizing: border-box; font-family: 'Outfit', sans-serif; }
+        body { background: var(--bg-dark); color: var(--text-main); line-height: 1.6; padding: 20px; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+
+        .container { max-width: 800px; width: 100%; }
+
+        .card { 
+            background: var(--surface); 
+            border: 1px solid var(--border); 
+            border-radius: 20px; 
+            padding: 40px; 
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; border-bottom: 1px solid var(--border); padding-bottom: 20px; }
+        .logo { font-weight: 800; font-size: 1.5rem; color: var(--primary); letter-spacing: -1px; }
+        .status-badge { background: var(--primary); color: #fff; padding: 6px 15px; border-radius: 30px; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; }
+        .status-badge.approved { background: #10b981; }
+
+        .section-title { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; font-weight: 600; }
+
+        .customer-info { margin-bottom: 30px; }
+        .customer-name { font-size: 1.5rem; font-weight: 700; }
+
+        .item-row { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid var(--border); }
+        .item-details strong { display: block; }
+        .item-details small { color: var(--text-muted); }
+        .item-price { font-weight: 700; color: var(--primary); }
+
+        .totals { margin-top: 30px; text-align: right; }
+        .total-row { display: flex; justify-content: flex-end; gap: 40px; margin-bottom: 5px; }
+        .total-row.grand { font-size: 1.8rem; color: var(--text-main); font-weight: 800; border-top: 1px solid var(--border); margin-top: 15px; padding-top: 15px; }
+
+        .payment-qr { 
+            margin-top: 40px; 
+            background: rgba(255,255,255,0.03); 
+            border-radius: var(--radius); 
+            padding: 20px; 
+            display: flex; 
+            align-items: center; 
+            gap: 20px;
+            border: 1px dashed var(--border);
+        }
+        .qr-placeholder { width: 100px; height: 100px; background: #fff; border-radius: 8px; padding: 5px; }
+        .qr-placeholder img { width: 100%; height: 100%; }
+
+        .actions { margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .btn { 
+            padding: 18px; 
+            border-radius: var(--radius); 
+            border: none; 
+            font-weight: 700; 
+            cursor: pointer; 
+            transition: 0.3s; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 10px;
+            font-size: 1rem;
+        }
+        .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 10px 15px -3px rgba(124, 58, 237, 0.3); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 20px 25px -5px rgba(124, 58, 237, 0.4); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform:none; }
+        
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
+        .btn-outline:hover { background: rgba(255,255,255,0.05); }
+
+        .loading-screen { position: fixed; inset: 0; background: var(--bg-dark); display: flex; align-items: center; justify-content: center; z-index: 100; flex-direction: column; gap: 20px; }
+        .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .success-msg { text-align: center; display: none; }
+        .success-msg i { font-size: 4rem; color: #10b981; margin-bottom: 20px; }
+
+        @media (max-width: 600px) {
+            .card { padding: 25px; }
+            .header { flex-direction: column; gap: 10px; }
+            .actions { grid-template-columns: 1fr; }
+            .total-row.grand { font-size: 1.4rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-screen" id="loader">
+        <div class="spinner"></div>
+        <p style="color: var(--text-muted)">Fetching your quotation...</p>
+    </div>
+
+    <div class="container">
+        <div class="card" id="quote-card" style="display: none;">
+            <div class="header">
+                <div>
+                    <div class="logo">MB ENTERPRISES</div>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;" id="quote-date"></p>
+                </div>
+                <div class="status-badge" id="quote-status">Pending</div>
+            </div>
+
+            <div class="customer-info">
+                <div class="section-title">Quotation For</div>
+                <div class="customer-name" id="cust-name">...</div>
+                <div id="cust-address" style="color: var(--text-muted); font-size: 0.9rem;"></div>
+            </div>
+
+            <div class="items-section">
+                <div class="section-title">Requested Items</div>
+                <div id="items-list"></div>
+            </div>
+
+            <div class="totals">
+                <div class="total-row">
+                    <span>Subtotal</span>
+                    <span id="subtotal">₹0.00</span>
+                </div>
+                <div class="total-row">
+                    <span id="tax-label">GST (18%)</span>
+                    <span id="tax-amount">₹0.00</span>
+                </div>
+                <div class="total-row grand">
+                    <span>Total</span>
+                    <span id="grand-total">₹0.00</span>
+                </div>
+            </div>
+
+            <div id="payment-block" style="display: none;">
+                <div class="payment-qr">
+                    <div class="qr-placeholder" id="qr-img-cont"></div>
+                    <div>
+                        <strong style="display: block;">Scan to Pay via UPI</strong>
+                        <small style="color: var(--text-muted);">GPay, PhonePe, Paytm or Any UPI App</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="actions" id="action-btns">
+                <button class="btn btn-outline" onclick="window.print()">
+                    <i class='bx bx-printer'></i> Print / Save
+                </button>
+                <button class="btn btn-primary" id="approve-btn">
+                    <i class='bx bx-check-circle'></i> Approve Quotation
+                </button>
+            </div>
+
+            <div class="success-msg" id="success-area">
+                <i class='bx bx-check-double'></i>
+                <h2>Quotation Approved!</h2>
+                <p style="color: var(--text-muted); margin-bottom: 25px;">Thank you for approving. We have notified the team. You can proceed with the payment using the QR code above.</p>
+                <button class="btn btn-outline" style="margin: 0 auto;" onclick="window.location.reload()">
+                    <i class='bx bx-refresh'></i> View Updated Status
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        // CONFIG (Pulled from firebase-config.js)
+        const firebaseConfig = {
+          apiKey: "AIzaSyA5qOnOcF6Xv7i0g4xRzSFPDMy0UISAoh0",
+          authDomain: "veeresh-ddf94.firebaseapp.com",
+          projectId: "veeresh-ddf94",
+          storageBucket: "veeresh-ddf94.firebasestorage.app",
+          messagingSenderId: "509659125264",
+          appId: "1:509659125264:web:6486f3c5041dae90291c95",
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        async function init() {
+            const params = new URLSearchParams(window.location.search);
+            const quoteId = params.get('id');
+
+            if (!quoteId) {
+                alert("Invalid Link. No Quotation ID found.");
+                return;
+            }
+
+            try {
+                const qRef = doc(db, "quotation_requests", quoteId);
+                const qSnap = await getDoc(qRef);
+
+                if (!qSnap.exists()) {
+                    alert("Quotation not found. It might have been deleted.");
+                    return;
+                }
+
+                const data = qSnap.data();
+                const settingsSnap = await getDoc(doc(db, "settings", "general"));
+                const settings = settingsSnap.exists() ? settingsSnap.data() : { upiId: '', upiName: '', tax: 18 };
+
+                render(data, settings, quoteId);
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('quote-card').style.display = 'block';
+
+            } catch (err) {
+                console.error(err);
+                alert("Connection Error. Please check your internet.");
+            }
+        }
+
+        function render(quote, settings, id) {
+            document.getElementById('quote-date').innerText = quote.createdAt ? new Date(quote.createdAt.seconds * 1000).toLocaleDateString() : 'Draft';
+            document.getElementById('cust-name').innerText = quote.customer.name;
+            document.getElementById('cust-address').innerText = quote.customer.address || 'Address not provided';
+            
+            const statusBadge = document.getElementById('quote-status');
+            statusBadge.innerText = quote.paymentStatus || 'Pending';
+            if(quote.paymentStatus === 'Approved') statusBadge.classList.add('approved');
+
+            // Items math
+            const taxRate = settings.tax || 18;
+            let subVal = 0;
+            const itemsCont = document.getElementById('items-list');
+            
+            itemsCont.innerHTML = quote.items.map(item => {
+                const isInclusive = quote.gstInclusive || false;
+                const price = item.price || 0;
+                const qty = item.qty || 1;
+                
+                const unitDisplay = isInclusive ? (price / (1 + (taxRate/100))) : price;
+                const lineSub = unitDisplay * qty;
+                subVal += lineSub;
+
+                const variantStr = item.variant ? `<small>(${item.variant})</small>` : '';
+                return `
+                    <div class="item-row">
+                        <div class="item-details">
+                            <strong>${item.name} ${variantStr}</strong>
+                            <small>${qty} Unit(s) x ₹${unitDisplay.toFixed(2)}</small>
+                        </div>
+                        <div class="item-price">₹${lineSub.toFixed(2)}</div>
+                    </div>
+                `;
+            }).join('');
+
+            const taxVal = subVal * (taxRate / 100);
+            const grandVal = subVal + taxVal;
+
+            document.getElementById('subtotal').innerText = `₹${subVal.toLocaleString(undefined, {minimumFractionDigits:2})}`;
+            document.getElementById('tax-label').innerText = `GST (${taxRate}%)`;
+            document.getElementById('tax-amount').innerText = `₹${taxVal.toLocaleString(undefined, {minimumFractionDigits:2})}`;
+            document.getElementById('grand-total').innerText = `₹${grandVal.toLocaleString(undefined, {minimumFractionDigits:2})}`;
+
+            // QR Code
+            if (settings.upiId) {
+                document.getElementById('payment-block').style.display = 'block';
+                const upiUrl = `upi://pay?pa=${settings.upiId}&pn=${encodeURIComponent(settings.upiName)}&am=${grandVal.toFixed(2)}&cu=INR&tn=Quote Approval ${id.substring(0,5)}`;
+                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiUrl)}`;
+                document.getElementById('qr-img-cont').innerHTML = `<img src="${qrUrl}" alt="Scan to pay">`;
+            }
+
+            // Approval Toggle
+            if (quote.paymentStatus === 'Approved' || quote.paymentStatus === 'Paid') {
+                document.getElementById('action-btns').style.display = 'none';
+                document.getElementById('success-area').style.display = 'block';
+            }
+
+            document.getElementById('approve-btn').onclick = async () => {
+                const btn = document.getElementById('approve-btn');
+                btn.disabled = true;
+                btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Processing...";
+                
+                try {
+                    await updateDoc(doc(db, "quotation_requests", id), {
+                        paymentStatus: 'Approved',
+                        approvedAt: serverTimestamp()
+                    });
+                    document.getElementById('action-btns').style.display = 'none';
+                    document.getElementById('success-area').style.display = 'block';
+                    statusBadge.innerText = 'Approved';
+                    statusBadge.classList.add('approved');
+                } catch (e) {
+                    alert("Submission failed. Try again.");
+                    btn.disabled = false;
+                    btn.innerHTML = "<i class='bx bx-check-circle'></i> Approve Quotation";
+                }
+            };
+        }
+
+        init();
+    </script>
+</body>
+</html>
